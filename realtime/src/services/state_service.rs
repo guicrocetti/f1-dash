@@ -25,6 +25,11 @@ impl StateService {
         Ok(state.to_string())
     }
 
+    pub async fn with_state<R>(&self, read: impl FnOnce(&Value) -> R) -> R {
+        let state = self.state.read().await;
+        read(&state)
+    }
+
     pub async fn set_state(&self, new_state: Value) -> Result<(), Error> {
         let mut state = self.state.write().await;
         *state = new_state;

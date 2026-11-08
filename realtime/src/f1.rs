@@ -1,10 +1,12 @@
+use std::time::Instant;
+
 use anyhow::Error;
-use serde_json::json;
+use serde_json::{Value, json};
 use tokio::{sync::broadcast::Sender, time::Duration};
 use tokio_stream::StreamExt;
 use tracing::{error, info, trace, warn};
 
-use crate::services::state_service::StateService;
+use crate::services::{driver_history::DriverHistory, state_service::StateService};
 
 const URL: &str = "livetiming.formula1.com/signalrcore";
 const HUB: &str = "Streaming";
@@ -37,10 +39,17 @@ const TOPICS: [&str; 17] = [
 pub async fn ingest_f1(
     state_service: StateService,
     update_sender: Sender<String>,
+    history: &mut DriverHistory,
 ) -> Result<(), Error> {
     let mut client = signalr::create_client(URL, HUB).await?;
 
-    let initial = signalr::subscribe(&mut client, &TOPICS).await?;
+    let mut initial = signalr::subscribe(&mut client, &TOPICS).await?;
+
+    history.begin_connection(&initial);
+    if let Some(initial) = initial.as_object_mut() {
+        initial.insert("DriverHistory".to_string(), history.to_value());
+    }
+
     state_service.set_state(initial).await?;
 
     let mut stream = signalr::listen(client);
@@ -63,17 +72,34 @@ pub async fn ingest_f1(
                 return Ok(());
             }
 
-            let payload = json!({ update.topic: update.data });
+            publish(
+                &state_service,
+                &update_sender,
+                json!({ update.topic.as_str(): &update.data }),
+            )
+            .await;
 
-            if let Err(err) = update_sender.send(payload.to_string()) {
-                error!(?err, "failed to send update");
-            }
+            let derived = state_service
+                .with_state(|state| {
+                    history.observe(&update.topic, &update.data, state, Instant::now())
+                })
+                .await;
 
-            if let Err(err) = state_service.update_state(payload).await {
-                error!(?err, "failed to update state");
+            if let Some(derived) = derived {
+                publish(&state_service, &update_sender, derived).await;
             }
         }
     }
 
     Ok(())
+}
+
+async fn publish(state_service: &StateService, update_sender: &Sender<String>, payload: Value) {
+    if let Err(err) = update_sender.send(payload.to_string()) {
+        error!(?err, "failed to send update");
+    }
+
+    if let Err(err) = state_service.update_state(payload).await {
+        error!(?err, "failed to update state");
+    }
 }

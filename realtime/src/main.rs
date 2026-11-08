@@ -3,11 +3,12 @@ use shared::tracing_subscriber;
 use tokio::sync::broadcast;
 use tracing::warn;
 
-use crate::services::state_service::StateService;
+use crate::services::{driver_history::DriverHistory, state_service::StateService};
 
 mod f1;
 mod http_server;
 mod services {
+    pub mod driver_history;
     pub mod state_service;
 }
 
@@ -23,8 +24,10 @@ async fn main() -> Result<(), Error> {
         let state_service = state_service.clone();
         let sender = sender.clone();
         tokio::spawn(async move {
+            let mut history = DriverHistory::new();
+
             loop {
-                match f1::ingest_f1(state_service.clone(), sender.clone()).await {
+                match f1::ingest_f1(state_service.clone(), sender.clone(), &mut history).await {
                     Ok(_) => {}
                     Err(err) => {
                         warn!(?err, "ingest_f1 method returned error");

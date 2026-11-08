@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import clsx from "clsx";
 import { motion } from "motion/react";
 
@@ -14,6 +15,9 @@ import DriverGap from "./DriverGap";
 import DriverTire from "./DriverTire";
 import DriverMiniSectors from "./DriverMiniSectors";
 import DriverLapTime from "./DriverLapTime";
+import DriverIdealLap from "./DriverIdealLap";
+import DriverLastLapGap from "./DriverLastLapGap";
+import DriverMetrics from "./DriverMetrics";
 import DriverInfo from "./DriverInfo";
 import DriverCarMetrics from "./DriverCarMetrics";
 
@@ -45,6 +49,8 @@ export default function Driver({ driver, timingDriver, position }: Props) {
 	const appTimingDriver = useDataStore((state) => state.state?.TimingAppData?.Lines[driver.RacingNumber]);
 	const carData = useDataStore((state) => (state?.carsData ? state.carsData[driver.RacingNumber].Channels : undefined));
 
+	const [expanded, setExpanded] = useState(false);
+
 	const hasFastest = timingStatsDriver?.PersonalBestLapTime.Position == 1;
 
 	const carMetrics = useSettingsStore((state) => state.carMetrics);
@@ -62,11 +68,20 @@ export default function Driver({ driver, timingDriver, position }: Props) {
 			})}
 		>
 			<div
-				className="grid items-center gap-2"
+				role="button"
+				tabIndex={0}
+				aria-expanded={expanded}
+				onClick={() => setExpanded((value) => !value)}
+				onKeyDown={(event) => {
+					if (event.key !== "Enter" && event.key !== " ") return;
+					event.preventDefault();
+					setExpanded((value) => !value);
+				}}
+				className="grid cursor-pointer items-center gap-2"
 				style={{
 					gridTemplateColumns: carMetrics
-						? "5.5rem 3.5rem 5.5rem 4rem 5rem 5.5rem auto 10.5rem"
-						: "5.5rem 3.5rem 5.5rem 4rem 5rem 5.5rem auto",
+						? "5.5rem 3.5rem 5.5rem 4rem 5rem 5.5rem auto 5rem 5.5rem 10.5rem"
+						: "5.5rem 3.5rem 5.5rem 4rem 5rem 5.5rem auto 5rem 5.5rem",
 				}}
 			>
 				<DriverTag className="min-w-full!" short={driver.Tla} teamColor={driver.TeamColour} position={position} />
@@ -81,9 +96,13 @@ export default function Driver({ driver, timingDriver, position }: Props) {
 				<DriverGap timingDriver={timingDriver} sessionPart={sessionPart} />
 				<DriverLapTime last={timingDriver.LastLapTime} best={timingDriver.BestLapTime} hasFastest={hasFastest} />
 				<DriverMiniSectors sectors={timingDriver.Sectors} bestSectors={timingStatsDriver?.BestSectors} />
+				<DriverIdealLap bestSectors={timingStatsDriver?.BestSectors} />
+				<DriverLastLapGap lastLap={timingDriver.LastLapTime.Value} bestLap={timingDriver.BestLapTime.Value} />
 
 				{carMetrics && carData && <DriverCarMetrics carData={carData} />}
 			</div>
+
+			{expanded && <DriverMetrics racingNumber={driver.RacingNumber} />}
 		</motion.div>
 	);
 }

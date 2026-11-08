@@ -49,8 +49,8 @@ const TableHeaders = () => {
 			className="grid items-center gap-2 p-1 px-2 text-sm font-medium text-zinc-500"
 			style={{
 				gridTemplateColumns: carMetrics
-					? "5.5rem 3.5rem 5.5rem 4rem 5rem 5.5rem auto 10.5rem"
-					: "5.5rem 3.5rem 5.5rem 4rem 5rem 5.5rem auto",
+					? "5.5rem 3.5rem 5.5rem 4rem 5rem 5.5rem auto 5rem 5.5rem 10.5rem"
+					: "5.5rem 3.5rem 5.5rem 4rem 5rem 5.5rem auto 5rem 5.5rem",
 			}}
 		>
 			<p>Position</p>
@@ -60,6 +60,8 @@ const TableHeaders = () => {
 			<p>Gap</p>
 			<p>LapTime</p>
 			<p>Sectors</p>
+			<p>Ideal</p>
+			<p>Last Gap</p>
 			{carMetrics && <p>Car Metrics</p>}
 		</div>
 	);
@@ -75,8 +77,8 @@ const SkeletonDriver = () => {
 			className="grid items-center gap-2 p-1.5"
 			style={{
 				gridTemplateColumns: carMetrics
-					? "5.5rem 3.5rem 5.5rem 4rem 5rem 5.5rem auto 10.5rem"
-					: "5.5rem 3.5rem 5.5rem 4rem 5rem 5.5rem auto",
+					? "5.5rem 3.5rem 5.5rem 4rem 5rem 5.5rem auto 5rem 5.5rem 10.5rem"
+					: "5.5rem 3.5rem 5.5rem 4rem 5rem 5.5rem auto 5rem 5.5rem",
 			}}
 		>
 			<div className={animateClass} style={{ width: "100%" }} />
@@ -112,6 +114,10 @@ const SkeletonDriver = () => {
 					</div>
 				))}
 			</div>
+
+			<div className={clsx(animateClass, "h-4! w-full")} />
+
+			<div className={clsx(animateClass, "h-4! w-full")} />
 
 			{carMetrics && (
 				<div className="flex w-full gap-2">

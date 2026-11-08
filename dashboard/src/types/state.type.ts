@@ -15,6 +15,20 @@ export type State = {
 	TimingData?: TimingData;
 	TeamRadio?: TeamRadio;
 	ChampionshipPrediction?: ChampionshipPrediction;
+	DriverHistory?: DriverHistory;
+};
+
+export type DriverHistory = {
+	[racingNumber: string]: { Laps: { [index: string]: DriverHistoryLap } };
+};
+
+export type DriverHistoryLap = {
+	Session: string | null;
+	Value: string;
+	Clean: boolean;
+	Stint: number | null;
+	Compound: string | null;
+	TyreAge: number | null;
 };
 
 export type Heartbeat = {
@@ -244,8 +258,8 @@ export type TimingStatsDriver = {
 	BestSpeeds: {
 		I1: PersonalBestLapTime;
 		I2: PersonalBestLapTime;
-		Fl: PersonalBestLapTime;
-		St: PersonalBestLapTime;
+		FL: PersonalBestLapTime;
+		ST: PersonalBestLapTime;
 	};
 };
 

@@ -38,6 +38,7 @@ export const useDataEngine = ({ updateState, updatePosition, updateCarData }: Pr
 		TimingData: useStatefulBuffer(),
 		TeamRadio: useStatefulBuffer(),
 		ChampionshipPrediction: useStatefulBuffer(),
+		DriverHistory: useStatefulBuffer(),
 	};
 
 	const carBuffer = useBuffer<CarsData>();

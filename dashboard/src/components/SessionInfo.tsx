@@ -6,6 +6,7 @@ import { useDataStore } from "@/stores/useDataStore";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 
 import Flag from "@/components/Flag";
+import IdealLap from "@/components/IdealLap";
 
 const sessionPartPrefix = (name: string) => {
 	switch (name) {
@@ -55,6 +56,10 @@ export default function SessionInfo() {
 				) : (
 					<div className="mt-1 h-6 w-[150px] animate-pulse rounded-md bg-zinc-800 font-semibold" />
 				)}
+			</div>
+
+			<div className="ml-2 border-l border-zinc-800 pl-4">
+				<IdealLap />
 			</div>
 		</div>
 	);

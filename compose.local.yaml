@@ -1,0 +1,67 @@
+# Local run built from source, reachable from the local network.
+#
+#   LAN_IP=<host-lan-ip> docker compose -f compose.local.yaml up -d --build
+#
+# Ports are bound only to loopback and LAN_IP (not 0.0.0.0), so the services
+# are not exposed on tailscale/docker/libvirt interfaces. Note that Docker
+# published ports bypass ufw rules.
+
+x-hardening: &hardening
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+  restart: unless-stopped
+  pids_limit: 256
+  mem_limit: 512m
+
+services:
+  api:
+    <<: *hardening
+    build:
+      context: .
+      dockerfile: dockerfile
+      target: api
+    user: "65534:65534"
+    # schedule endpoint uses a disk cache (cached crate -> $XDG_CACHE_HOME)
+    tmpfs:
+      - /cache:uid=65534,gid=65534
+    environment:
+      - XDG_CACHE_HOME=/cache
+      - HOME=/cache
+      - RUST_LOG=api=info
+      - ADDRESS=0.0.0.0:4001
+      - ORIGIN=http://localhost:3000;http://${LAN_IP:?set LAN_IP}:3000
+    # Only used server-side by the dashboard; not published.
+    expose: ["4001"]
+
+  realtime:
+    <<: *hardening
+    build:
+      context: .
+      dockerfile: dockerfile
+      target: realtime
+    user: "65534:65534"
+    environment:
+      - RUST_LOG=realtime=info
+      - ADDRESS=0.0.0.0:4000
+      - ORIGIN=http://localhost:3000;http://${LAN_IP:?set LAN_IP}:3000
+    ports:
+      - 127.0.0.1:4000:4000
+      - ${LAN_IP:?set LAN_IP}:4000:4000
+
+  web:
+    <<: *hardening
+    build:
+      context: ./dashboard
+      dockerfile: dockerfile
+    user: "node"
+    depends_on: [api, realtime]
+    tmpfs:
+      - /tmp
+      - /app/.next/cache:uid=1000,gid=1000
+    environment:
+      - NEXT_PUBLIC_LIVE_URL=http://${LAN_IP:?set LAN_IP}:4000
+      - API_URL=http://api:4001
+    ports:
+      - 127.0.0.1:3000:3000
+      - ${LAN_IP:?set LAN_IP}:3000:3000

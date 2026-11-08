@@ -17,4 +17,5 @@ README.md
 compose.env
 compose.env.example
 compose.yaml
+compose.local.yaml
 docker-bake.hcl
